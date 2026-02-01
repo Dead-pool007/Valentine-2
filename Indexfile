@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Will You Be My Valentine, My Love? ❤️</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Lucida Sans', sans-serif;
+            background: linear-gradient(135deg, #ff6b6b, #c0392b);
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        /* Floating hearts background */
+        .hearts {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .heart {
+            position: absolute;
+            font-size: 1.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            animation: float 12s infinite linear;
+            user-select: none;
+        }
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(-150px) rotate(360deg); opacity: 0; }
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 50px 60px;
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            z-index: 10;
+            max-width: 90%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        h1 {
+            font-size: 3.2rem;
+            margin: 0 0 30px 0;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            color: #fff;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        button {
+            padding: 16px 40px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        #yesBtn {
+            background: #ff3366;
+            color: white;
+            box-shadow: 0 8px 25px rgba(255, 51, 102, 0.5);
+            animation: pulse 2s infinite;
+        }
+        #yesBtn:hover {
+            transform: scale(1.15);
+            box-shadow: 0 12px 35px rgba(255, 51, 102, 0.7);
+        }
+        #noBtn {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            backdrop-filter: blur(4px);
+            border: 2px solid rgba(255,255,255,0.4);
+            position: relative;
+            transition: all 0.2s;
+        }
+        #noBtn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        #message {
+            margin-top: 40px;
+            font-size: 2.4rem;
+            font-weight: 600;
+            text-shadow: 0 3px 10px rgba(0,0,0,0.6);
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 1s ease;
+        }
+        #message.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        @media (max-width: 600px) {
+            h1 { font-size: 2.4rem; }
+            button { padding: 14px 30px; font-size: 1.3rem; }
+            .buttons { gap: 30px; }
+        }
+        /* Optional: small speaker icon to toggle sound */
+        #soundToggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.25);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.6rem;
+            cursor: pointer;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+            color: white;
+        }
+        /* Tiny visitor info display (semi-transparent, bottom right) */
+        #visitorInfo {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.9);
+            z-index: 99;
+            max-width: 220px;
+            text-align: right;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="hearts" id="heartsContainer"></div>
+    <div class="container">
+        <h1>Will you be my Valentine, my love? ❤️</h1>
+        <div class="buttons">
+            <button id="yesBtn">Yes!</button>
+            <button id="noBtn">No</button>
+        </div>
+        <div id="message"></div>
+    </div>
+
+    <!-- Tiny display for location (shows after fetch) -->
+    <div id="visitorInfo"></div>
+
+    <!-- Romantic background music -->
+    <audio id="bgMusic" loop>
+        <source src="https://www.bensound.com/bensound-music/bensound-love.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <!-- Unmute button -->
+    <button id="soundToggle">🔇</button>
+
+    <!-- Confetti library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+    <script>
+        // ────────────────────────────────────────────────
+        // Fetch IP + Location (runs once on page load)
+        // ────────────────────────────────────────────────
+        async function fetchVisitorInfo() {
+            try {
+                // Primary: ipapi.co (no key, detailed)
+                let response = await fetch('https://ipapi.co/json/');
+                
+                // Fallback if needed: freeipapi.com
+                // let response = await fetch('https://freeipapi.com/api/json');
+                
+                if (!response.ok) throw new Error('Geolocation fetch failed');
+                
+                const data = await response.json();
+
+                // Log full data to console (for your testing)
+                console.log('Visitor Info:', data);
+
+                // Build nice message
+                const city    = data.city    || 'Unknown city';
+                const region  = data.region  || data.region_name || 'Unknown region';
+                const country = data.country_name || data.country || 'Unknown country';
+                const ip      = data.ip      || 'Hidden';
+
+                const infoText = `Opened from ${city}, ${region} (${country}) • IP: ${ip.slice(0,7)}...`;
+
+                // Show tiny message bottom-right
+                const el = document.getElementById('visitorInfo');
+                el.textContent = infoText;
+                el.style.display = 'block';
+
+            } catch (err) {
+                console.error('Could not get visitor location:', err);
+                // Optional: silent fail or show generic
+                document.getElementById('visitorInfo').textContent = 'Location: Somewhere special ❤️';
+                document.getElementById('visitorInfo').style.display = 'block';
+            }
+        }
+
+        // Run when page is ready
+        window.addEventListener('load', fetchVisitorInfo);
+
+        // ────────────────────────────────────────────────
+        // Your original code continues below (hearts, buttons, music, confetti...)
+        // ────────────────────────────────────────────────
+
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heart.innerHTML = ['❤️','💕','💖','💗','💞'][Math.floor(Math.random()*5)];
+           
+            heart.style.left = Math.random() * 100 + 'vw';
+            const size = Math.random() * 1.2 + 0.8;
+            heart.style.fontSize = size + 'rem';
+            heart.style.animationDuration = (Math.random() * 8 + 10) + 's';
+            heart.style.animationDelay = Math.random() * 5 + 's';
+            document.getElementById('heartsContainer').appendChild(heart);
+            setTimeout(() => heart.remove(), 15000);
+        }
+        setInterval(createHeart, 400);
+        for(let i = 0; i < 12; i++) {
+            setTimeout(createHeart, i * 300);
+        }
+
+        const noBtn = document.getElementById('noBtn');
+        const yesBtn = document.getElementById('yesBtn');
+        const message = document.getElementById('message');
+        const bgMusic = document.getElementById('bgMusic');
+        const soundToggle = document.getElementById('soundToggle');
+
+        bgMusic.volume = 0.25;
+        bgMusic.muted = true;
+        bgMusic.play().catch(() => {
+            document.body.addEventListener('click', () => {
+                bgMusic.muted = false;
+                bgMusic.play();
+                soundToggle.textContent = '🔊';
+            }, { once: true });
+        });
+
+        soundToggle.addEventListener('click', () => {
+            bgMusic.muted = !bgMusic.muted;
+            if (!bgMusic.muted) bgMusic.play();
+            soundToggle.textContent = bgMusic.muted ? '🔇' : '🔊';
+        });
+
+        noBtn.addEventListener('mouseover', () => {
+            const container = document.querySelector('.container');
+            const rect = container.getBoundingClientRect();
+            const btnRect = noBtn.getBoundingClientRect();
+            const maxX = rect.width - btnRect.width - 40;
+            const maxY = rect.height - btnRect.height - 40;
+            noBtn.style.position = 'absolute';
+            noBtn.style.left = Math.random() * maxX + 'px';
+            noBtn.style.top = Math.random() * maxY + 'px';
+        });
+
+        yesBtn.addEventListener('click', () => {
+            message.textContent = "Yayyyy! I love you so much! 🥰💗";
+            message.classList.add('show');
+            noBtn.style.display = 'none';
+            bgMusic.volume = 0.4;
+            bgMusic.muted = false;
+            bgMusic.play();
+            for(let i = 0; i < 25; i++) {
+                setTimeout(createHeart, i * 80);
+            }
+            const heartInterval = setInterval(createHeart, 150);
+            setTimeout(() => clearInterval(heartInterval), 5000);
+
+            const count = 200;
+            const defaults = {
+                origin: { y: 0.7 },
+                zIndex: 9999,
+                disableForReducedMotion: true
+            };
+            function fireConfetti() {
+                confetti({
+                    ...defaults,
+                    particleCount: count / 2,
+                    angle: 60,
+                    spread: 55,
+                    startVelocity: 45,
+                    colors: ['#ff3366', '#ff69b4', '#ffffff', '#ffb6c1', '#db7093']
+                });
+                confetti({
+                    ...defaults,
+                    particleCount: count / 2,
+                    angle: 120,
+                    spread: 55,
+                    startVelocity: 45,
+                    colors: ['#ff3366', '#ff69b4', '#ffffff', '#ffb6c1', '#db7093']
+                });
+            }
+            fireConfetti();
+            setTimeout(fireConfetti, 250);
+            setTimeout(fireConfetti, 500);
+            setTimeout(() => {
+                confetti({
+                    ...defaults,
+                    particleCount: 120,
+                    spread: 90,
+                    origin: { y: 0.6 },
+                    colors: ['#ff3366', '#ff69b4', '#ffffff', '#ffb6c1']
+                });
+            }, 800);
+        });
+    </script>
+</body>
+</html> 
