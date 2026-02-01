@@ -108,21 +108,6 @@
             backdrop-filter: blur(4px);
             color: white;
         }
-        #visitorInfo {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            background: rgba(0,0,0,0.3);
-            backdrop-filter: blur(4px);
-            padding: 8px 12px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            color: rgba(255,255,255,0.9);
-            z-index: 99;
-            max-width: 220px;
-            text-align: right;
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -136,14 +121,10 @@
         <div id="message"></div>
     </div>
 
-    <div id="visitorInfo"></div>
+    <!-- Removed: <div id="visitorInfo"></div> -->
 
-    <!-- Audio: CHANGE src to local file for GitHub Pages reliability -->
     <audio id="bgMusic" loop crossorigin="anonymous">
-        <!-- Recommended: upload love.mp3 to same folder as this file -->
         <source src="love.mp3" type="audio/mpeg">
-        <!-- Fallback if you keep external (often blocked): -->
-        <!-- <source src="https://www.bensound.com/bensound-music/bensound-love.mp3" type="audio/mpeg"> -->
         Your browser does not support the audio element.
     </audio>
 
@@ -152,7 +133,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
     <script>
-        // Fetch visitor info (robust with fallback)
+        // Fetch visitor info (still runs, but only logs to console now)
         async function fetchVisitorInfo() {
             try {
                 let response = await fetch('https://ipapi.co/json/');
@@ -161,21 +142,10 @@
 
                 const data = await response.json();
                 console.log('Visitor Info:', data);
-
-                const city    = data.city    || 'somewhere';
-                const region  = data.region  || data.regionName || '';
-                const country = data.country_name || data.country || '';
-                const ip      = data.ip ? data.ip.slice(0,7) + '...' : 'hidden';
-
-                const infoText = `Opened from ${city}${region ? ', ' + region : ''} (${country}) • IP: ${ip}`;
-                const el = document.getElementById('visitorInfo');
-                el.textContent = infoText;
-                el.style.display = 'block';
+                // Removed: code that updated #visitorInfo
 
             } catch (err) {
                 console.error('Location fetch error:', err);
-                document.getElementById('visitorInfo').textContent = 'Opened from somewhere special ❤️';
-                document.getElementById('visitorInfo').style.display = 'block';
             }
         }
         window.addEventListener('load', fetchVisitorInfo);
