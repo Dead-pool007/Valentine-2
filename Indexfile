@@ -17,7 +17,6 @@
             align-items: center;
             position: relative;
         }
-        /* Floating hearts background */
         .hearts {
             position: fixed;
             top: 0;
@@ -51,19 +50,8 @@
             max-width: 90%;
             border: 2px solid rgba(255, 255, 255, 0.3);
         }
-        h1 {
-            font-size: 3.2rem;
-            margin: 0 0 30px 0;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            color: #fff;
-        }
-        .buttons {
-            display: flex;
-            justify-content: center;
-            gap: 60px;
-            flex-wrap: wrap;
-            position: relative;
-        }
+        h1 { font-size: 3.2rem; margin: 0 0 30px 0; text-shadow: 0 4px 10px rgba(0,0,0,0.5); color: #fff; }
+        .buttons { display: flex; justify-content: center; gap: 60px; flex-wrap: wrap; position: relative; }
         button {
             padding: 16px 40px;
             font-size: 1.5rem;
@@ -79,10 +67,7 @@
             box-shadow: 0 8px 25px rgba(255, 51, 102, 0.5);
             animation: pulse 2s infinite;
         }
-        #yesBtn:hover {
-            transform: scale(1.15);
-            box-shadow: 0 12px 35px rgba(255, 51, 102, 0.7);
-        }
+        #yesBtn:hover { transform: scale(1.15); box-shadow: 0 12px 35px rgba(255, 51, 102, 0.7); }
         #noBtn {
             background: rgba(255, 255, 255, 0.25);
             color: white;
@@ -91,9 +76,7 @@
             position: relative;
             transition: all 0.2s;
         }
-        #noBtn:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
+        #noBtn:hover { background: rgba(255, 255, 255, 0.15); }
         #message {
             margin-top: 40px;
             font-size: 2.4rem;
@@ -103,20 +86,13 @@
             transform: scale(0.8);
             transition: all 1s ease;
         }
-        #message.show {
-            opacity: 1;
-            transform: scale(1);
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.08); }
-        }
+        #message.show { opacity: 1; transform: scale(1); }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
         @media (max-width: 600px) {
             h1 { font-size: 2.4rem; }
             button { padding: 14px 30px; font-size: 1.3rem; }
             .buttons { gap: 30px; }
         }
-        /* Optional: small speaker icon to toggle sound */
         #soundToggle {
             position: fixed;
             bottom: 20px;
@@ -132,7 +108,6 @@
             backdrop-filter: blur(4px);
             color: white;
         }
-        /* Tiny visitor info display (semi-transparent, bottom right) */
         #visitorInfo {
             position: fixed;
             bottom: 80px;
@@ -161,73 +136,55 @@
         <div id="message"></div>
     </div>
 
-    <!-- Tiny display for location (shows after fetch) -->
     <div id="visitorInfo"></div>
 
-    <!-- Romantic background music -->
-    <audio id="bgMusic" loop>
-        <source src="https://www.bensound.com/bensound-music/bensound-love.mp3" type="audio/mpeg">
+    <!-- Audio: CHANGE src to local file for GitHub Pages reliability -->
+    <audio id="bgMusic" loop crossorigin="anonymous">
+        <!-- Recommended: upload love.mp3 to same folder as this file -->
+        <source src="love.mp3" type="audio/mpeg">
+        <!-- Fallback if you keep external (often blocked): -->
+        <!-- <source src="https://www.bensound.com/bensound-music/bensound-love.mp3" type="audio/mpeg"> -->
         Your browser does not support the audio element.
     </audio>
 
-    <!-- Unmute button -->
     <button id="soundToggle">🔇</button>
 
-    <!-- Confetti library -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
     <script>
-        // ────────────────────────────────────────────────
-        // Fetch IP + Location (runs once on page load)
-        // ────────────────────────────────────────────────
+        // Fetch visitor info (robust with fallback)
         async function fetchVisitorInfo() {
             try {
-                // Primary: ipapi.co (no key, detailed)
                 let response = await fetch('https://ipapi.co/json/');
-                
-                // Fallback if needed: freeipapi.com
-                // let response = await fetch('https://freeipapi.com/api/json');
-                
-                if (!response.ok) throw new Error('Geolocation fetch failed');
-                
-                const data = await response.json();
+                if (!response.ok) response = await fetch('https://freeipapi.com/api/json');
+                if (!response.ok) throw new Error('Fetch failed');
 
-                // Log full data to console (for your testing)
+                const data = await response.json();
                 console.log('Visitor Info:', data);
 
-                // Build nice message
-                const city    = data.city    || 'Unknown city';
-                const region  = data.region  || data.region_name || 'Unknown region';
-                const country = data.country_name || data.country || 'Unknown country';
-                const ip      = data.ip      || 'Hidden';
+                const city    = data.city    || 'somewhere';
+                const region  = data.region  || data.regionName || '';
+                const country = data.country_name || data.country || '';
+                const ip      = data.ip ? data.ip.slice(0,7) + '...' : 'hidden';
 
-                const infoText = `Opened from ${city}, ${region} (${country}) • IP: ${ip.slice(0,7)}...`;
-
-                // Show tiny message bottom-right
+                const infoText = `Opened from ${city}${region ? ', ' + region : ''} (${country}) • IP: ${ip}`;
                 const el = document.getElementById('visitorInfo');
                 el.textContent = infoText;
                 el.style.display = 'block';
 
             } catch (err) {
-                console.error('Could not get visitor location:', err);
-                // Optional: silent fail or show generic
-                document.getElementById('visitorInfo').textContent = 'Location: Somewhere special ❤️';
+                console.error('Location fetch error:', err);
+                document.getElementById('visitorInfo').textContent = 'Opened from somewhere special ❤️';
                 document.getElementById('visitorInfo').style.display = 'block';
             }
         }
-
-        // Run when page is ready
         window.addEventListener('load', fetchVisitorInfo);
 
-        // ────────────────────────────────────────────────
-        // Your original code continues below (hearts, buttons, music, confetti...)
-        // ────────────────────────────────────────────────
-
+        // ── Floating hearts ─────────────────────────────────────
         function createHeart() {
             const heart = document.createElement('div');
             heart.className = 'heart';
             heart.innerHTML = ['❤️','💕','💖','💗','💞'][Math.floor(Math.random()*5)];
-           
             heart.style.left = Math.random() * 100 + 'vw';
             const size = Math.random() * 1.2 + 0.8;
             heart.style.fontSize = size + 'rem';
@@ -237,14 +194,13 @@
             setTimeout(() => heart.remove(), 15000);
         }
         setInterval(createHeart, 400);
-        for(let i = 0; i < 12; i++) {
-            setTimeout(createHeart, i * 300);
-        }
+        for(let i = 0; i < 12; i++) setTimeout(createHeart, i * 300);
 
-        const noBtn = document.getElementById('noBtn');
-        const yesBtn = document.getElementById('yesBtn');
-        const message = document.getElementById('message');
-        const bgMusic = document.getElementById('bgMusic');
+        // ── Controls ────────────────────────────────────────────
+        const noBtn    = document.getElementById('noBtn');
+        const yesBtn   = document.getElementById('yesBtn');
+        const message  = document.getElementById('message');
+        const bgMusic  = document.getElementById('bgMusic');
         const soundToggle = document.getElementById('soundToggle');
 
         bgMusic.volume = 0.25;
@@ -252,14 +208,14 @@
         bgMusic.play().catch(() => {
             document.body.addEventListener('click', () => {
                 bgMusic.muted = false;
-                bgMusic.play();
+                bgMusic.play().catch(e => console.log("Play still blocked", e));
                 soundToggle.textContent = '🔊';
             }, { once: true });
         });
 
         soundToggle.addEventListener('click', () => {
             bgMusic.muted = !bgMusic.muted;
-            if (!bgMusic.muted) bgMusic.play();
+            if (!bgMusic.muted) bgMusic.play().catch(()=>{});
             soundToggle.textContent = bgMusic.muted ? '🔇' : '🔊';
         });
 
@@ -280,49 +236,21 @@
             noBtn.style.display = 'none';
             bgMusic.volume = 0.4;
             bgMusic.muted = false;
-            bgMusic.play();
-            for(let i = 0; i < 25; i++) {
-                setTimeout(createHeart, i * 80);
-            }
+            bgMusic.play().catch(()=>{});
+            for(let i = 0; i < 25; i++) setTimeout(createHeart, i * 80);
             const heartInterval = setInterval(createHeart, 150);
             setTimeout(() => clearInterval(heartInterval), 5000);
 
             const count = 200;
-            const defaults = {
-                origin: { y: 0.7 },
-                zIndex: 9999,
-                disableForReducedMotion: true
-            };
+            const defaults = { origin: { y: 0.7 }, zIndex: 9999, disableForReducedMotion: true };
             function fireConfetti() {
-                confetti({
-                    ...defaults,
-                    particleCount: count / 2,
-                    angle: 60,
-                    spread: 55,
-                    startVelocity: 45,
-                    colors: ['#ff3366', '#ff69b4', '#ffffff', '#ffb6c1', '#db7093']
-                });
-                confetti({
-                    ...defaults,
-                    particleCount: count / 2,
-                    angle: 120,
-                    spread: 55,
-                    startVelocity: 45,
-                    colors: ['#ff3366', '#ff69b4', '#ffffff', '#ffb6c1', '#db7093']
-                });
+                confetti({ ...defaults, particleCount: count/2, angle: 60,  spread: 55, startVelocity: 45, colors: ['#ff3366','#ff69b4','#ffffff','#ffb6c1','#db7093'] });
+                confetti({ ...defaults, particleCount: count/2, angle: 120, spread: 55, startVelocity: 45, colors: ['#ff3366','#ff69b4','#ffffff','#ffb6c1','#db7093'] });
             }
             fireConfetti();
             setTimeout(fireConfetti, 250);
             setTimeout(fireConfetti, 500);
-            setTimeout(() => {
-                confetti({
-                    ...defaults,
-                    particleCount: 120,
-                    spread: 90,
-                    origin: { y: 0.6 },
-                    colors: ['#ff3366', '#ff69b4', '#ffffff', '#ffb6c1']
-                });
-            }, 800);
+            setTimeout(() => confetti({ ...defaults, particleCount: 120, spread: 90, origin: { y: 0.6 }, colors: ['#ff3366','#ff69b4','#ffffff','#ffb6c1'] }), 800);
         });
     </script>
 </body>
